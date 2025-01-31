@@ -72,6 +72,55 @@ Clarinet.test({
 });
 
 Clarinet.test({
+  name: "Test collection creation and management",
+  async fn(chain: Chain, accounts: Map<string, Account>) {
+    const user1 = accounts.get('wallet_1')!;
+    const user2 = accounts.get('wallet_2')!;
+
+    // Create collection
+    let block = chain.mineBlock([
+      Tx.contractCall('pixel-nest', 'create-collection', [
+        types.ascii("Test Collection"),
+        types.ascii("A test collection"),
+        types.bool(true)
+      ], user1.address)
+    ]);
+
+    block.receipts[0].result.expectOk().expectUint(0);
+
+    // Add contributor
+    let contributorBlock = chain.mineBlock([
+      Tx.contractCall('pixel-nest', 'add-contributor', [
+        types.uint(0),
+        types.principal(user2.address)
+      ], user1.address)
+    ]);
+
+    contributorBlock.receipts[0].result.expectOk().expectBool(true);
+
+    // Create and add artwork to collection
+    let pixels = Array(64).fill(types.uint(0));
+    
+    let artworkBlock = chain.mineBlock([
+      Tx.contractCall('pixel-nest', 'create-artwork', [
+        types.uint(8),
+        types.uint(8),
+        types.list(pixels)
+      ], user1.address)
+    ]);
+
+    let addToCollectionBlock = chain.mineBlock([
+      Tx.contractCall('pixel-nest', 'add-artwork-to-collection', [
+        types.uint(0),
+        types.uint(0)
+      ], user1.address)
+    ]);
+
+    addToCollectionBlock.receipts[0].result.expectOk().expectBool(true);
+  },
+});
+
+Clarinet.test({
   name: "Test artwork transfer",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     const user1 = accounts.get('wallet_1')!;
