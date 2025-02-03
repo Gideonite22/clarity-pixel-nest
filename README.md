@@ -9,12 +9,13 @@ A decentralized platform for creating, storing, and animating pixel art on the S
 - Trade and transfer pixel art creations
 - Organize artwork and animations into collections
 - Collaborate with other artists through shared collections
+- Restrict transfers of artwork NFTs
 
 ## Features
 - Grid-based pixel art storage
 - Animation frame sequences
 - NFT minting capabilities 
-- Ownership and transfer functionality
+- Ownership and transfer functionality with restrictions
 - Collection management system
 - Collaborative creation support
 
@@ -34,3 +35,10 @@ Collections allow artists to:
 - Control visibility of their work
 - Manage contributor access
 - Build themed sets of pixel art
+
+### Transfer Restrictions
+Artists can now:
+- Enable/disable transfer restrictions on their artwork
+- Prevent unauthorized transfers of their work
+- Maintain better control over their creations
+- Artwork automatically leaves collections upon transfer
