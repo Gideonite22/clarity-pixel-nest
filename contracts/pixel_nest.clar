@@ -31,9 +31,45 @@
     }
 )
 
-;; Rest of contract remains unchanged...
+;; New: Artwork Metadata Map
+(define-map artwork-metadata
+    uint
+    {
+        title: (optional (string-ascii 64)),
+        description: (optional (string-ascii 256)),
+        tags: (list 5 (string-ascii 32))
+    }
+)
 
-;; Transfer artwork NFT with restrictions check
+;; Events
+(define-data-var last-event-id uint u0)
+
+(define-map events
+    uint
+    {
+        event-type: (string-ascii 32),
+        artwork-id: uint,
+        actor: principal,
+        timestamp: uint
+    }
+)
+
+;; Helper function to emit events
+(define-private (emit-event (event-type (string-ascii 32)) (artwork-id uint))
+    (let
+        ((event-id (+ (var-get last-event-id) u1)))
+        (var-set last-event-id event-id)
+        (map-set events event-id {
+            event-type: event-type,
+            artwork-id: artwork-id,
+            actor: tx-sender,
+            timestamp: block-height
+        })
+        (ok event-id)
+    )
+)
+
+;; Transfer artwork NFT with restrictions check and event emission
 (define-public (transfer-artwork (artwork-id uint) (recipient principal))
     (let
         (
@@ -46,11 +82,12 @@
             owner: recipient,
             collection-id: none
         }))
+        (try! (emit-event "transfer" artwork-id))
         (ok true)
     )
 )
 
-;; New function to toggle transfer restrictions
+;; Enhanced function to toggle transfer restrictions with event emission
 (define-public (set-artwork-transfer-restriction (artwork-id uint) (restricted bool))
     (let
         (
@@ -60,6 +97,28 @@
         (map-set artworks artwork-id (merge artwork {
             transfer-restricted: restricted
         }))
+        (try! (emit-event (if restricted "restrict_transfer" "unrestrict_transfer") artwork-id))
+        (ok true)
+    )
+)
+
+;; New: Set artwork metadata
+(define-public (set-artwork-metadata 
+    (artwork-id uint)
+    (title (optional (string-ascii 64)))
+    (description (optional (string-ascii 256)))
+    (tags (list 5 (string-ascii 32))))
+    (let
+        (
+            (artwork (unwrap! (map-get? artworks artwork-id) err-not-found))
+        )
+        (asserts! (is-eq (get owner artwork) tx-sender) err-unauthorized)
+        (map-set artwork-metadata artwork-id {
+            title: title,
+            description: description,
+            tags: tags
+        })
+        (try! (emit-event "metadata_update" artwork-id))
         (ok true)
     )
 )
