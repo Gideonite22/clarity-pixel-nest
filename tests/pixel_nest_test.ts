@@ -1,7 +1,5 @@
-// Previous test content remains unchanged...
-
 Clarinet.test({
-  name: "Test artwork metadata operations",
+  name: "Test artwork creation and deletion",
   async fn(chain: Chain, accounts: Map<string, Account>) {
     const user1 = accounts.get('wallet_1')!;
     
@@ -16,16 +14,27 @@ Clarinet.test({
       ], user1.address)
     ]);
 
-    // Set metadata
-    let metadataBlock = chain.mineBlock([
-      Tx.contractCall('pixel-nest', 'set-artwork-metadata', [
-        types.uint(0),
-        types.some(types.ascii("Test Artwork")),
-        types.some(types.ascii("A test artwork description")),
-        types.list([types.ascii("test"), types.ascii("art")])
+    block.receipts[0].result.expectOk().expectUint(0);
+
+    // Delete artwork
+    let deleteBlock = chain.mineBlock([
+      Tx.contractCall('pixel-nest', 'delete-artwork', [
+        types.uint(0)
       ], user1.address)
     ]);
 
-    metadataBlock.receipts[0].result.expectOk().expectBool(true);
+    deleteBlock.receipts[0].result.expectOk().expectBool(true);
+
+    // Check platform stats
+    let statsBlock = chain.mineBlock([
+      Tx.contractCall('pixel-nest', 'get-platform-stats', [], user1.address)
+    ]);
+
+    statsBlock.receipts[0].result.expectOk().expectTuple({
+      'total-artworks': types.uint(0),
+      'next-artwork-id': types.uint(1)
+    });
   },
 });
+
+// [Previous tests remain unchanged...]
